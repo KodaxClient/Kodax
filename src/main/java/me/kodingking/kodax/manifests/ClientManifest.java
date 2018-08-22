@@ -3,6 +3,7 @@ package me.kodingking.kodax.manifests;
 import com.google.gson.Gson;
 import java.net.URL;
 import java.util.List;
+import javax.swing.JOptionPane;
 import me.kodingking.kodaxnetty.utils.HttpUtil;
 
 public class ClientManifest {
@@ -26,8 +27,14 @@ public class ClientManifest {
     }
   }
 
-  public static ClientManifest fetch(URL url) {
-    return new Gson().fromJson(HttpUtil.performGet(url.getPath()), ClientManifest.class);
+  public static ClientManifest fetch(String url) {
+    String json = HttpUtil.performGet(url);
+
+    if (json.isEmpty()) {
+      return new ClientManifest();
+    }
+
+    return new Gson().fromJson(json, ClientManifest.class);
   }
 
 }

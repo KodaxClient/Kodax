@@ -1,8 +1,10 @@
 package me.kodingking.kodax.mixins.gui;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import me.kodingking.kodax.Kodax;
 import me.kodingking.kodax.manifests.ClientManifest.PinnedServer;
+import me.kodingking.kodax.utils.ReflectionUtils;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiMultiplayer;
 import net.minecraft.client.gui.ServerListEntryNormal;
@@ -36,8 +38,11 @@ public abstract class MixinGuiMultiplayer {
   @Inject(method = "updateScreen", at = @At("HEAD"))
   private void updateScreen(CallbackInfo callbackInfo) {
     try {
-      Field selectedIndexField = serverListSelector.getClass()
-          .getDeclaredField("selectedSlotIndex");
+      Field selectedIndexField = ReflectionUtils.getField(serverListSelector.getClass(),  new String[]{ "y", "selectedSlotIndex" });
+
+      if (selectedIndexField == null)
+        return;
+
       selectedIndexField.setAccessible(true);
       int selectedIndex = selectedIndexField.getInt(serverListSelector);
 
@@ -67,6 +72,8 @@ public abstract class MixinGuiMultiplayer {
 
   @Inject(method = "mouseClicked", at = @At("RETURN"))
   private void mouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo callbackInfo) {
+    if (Kodax.FULL_MANIFEST == null || Kodax.FULL_MANIFEST.getPinnedServers() == null)
+      return;
     for (int i = 0; i < Kodax.FULL_MANIFEST.getPinnedServers().size(); i++) {
       PinnedServer pinnedServer = Kodax.FULL_MANIFEST.getPinnedServers().get(i);
 

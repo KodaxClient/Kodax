@@ -11,7 +11,10 @@ public class NettyListener implements IClientListener {
 
   @Override
   public void packetReceived(ChannelHandlerContext channelHandlerContext, BasePacket basePacket) {
-    if (basePacket instanceof AdminAnnouncePacket)
-      ChatUtils.addChatMessage(ChatColor.RED + ((AdminAnnouncePacket) basePacket).getMessage());
+    if (basePacket instanceof AdminAnnouncePacket) {
+      ChatUtils.addChatMessage(
+          ChatColor.DARK_RED + "" + ChatColor.BOLD + "ANNOUNCEMENT "
+              + ChatColor.RED + ((AdminAnnouncePacket) basePacket).getMessage());
+    }
   }
 }

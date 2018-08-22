@@ -15,7 +15,24 @@ public class ChatUtils {
     if (prefix) {
       sb.append(PREFIX);
     }
-    sb.append(message);
+
+    String currentColor = "";
+
+    for (int i = 0; i < message.length(); i++) {
+      char currentChar = message.charAt(i);
+
+      if (currentChar == '§') {
+        if (currentColor.isEmpty())
+          sb.append("§").append(message.charAt(i + 1));
+        currentColor = "§" + message.charAt(i + 1);
+        i++;
+        if (i >= message.length())
+          break;
+      } else {
+        sb.append(currentColor).append(currentChar);
+      }
+    }
+
     Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(sb.toString()));
   }
 
@@ -26,6 +43,6 @@ public class ChatUtils {
   public static void sendChatMessage(String s) {
     if (Minecraft.getMinecraft().thePlayer == null)
       return;
-    Minecraft.getMinecraft().thePlayer.sendChatMessage(s);
+    addChatMessage(s, false);
   }
 }

@@ -4,10 +4,7 @@ import com.darkmagician6.eventapi.EventManager;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
-import javax.swing.JOptionPane;
 import me.kodingking.kodax.command.Command;
 import me.kodingking.kodax.config.ConfigManager;
 import me.kodingking.kodax.config.SaveVal;
@@ -42,11 +39,11 @@ public class Kodax {
   public boolean FIRST_LAUNCH = true;
 
   public void preStart() {
-    logger.info("Starting Project XENON pre-initialisation...");
+    logger.info("Starting Kodax pre-initialisation...");
 
-    SplashScreen.advanceProgress("Pre-loading Project XENON...");
+    SplashScreen.advanceProgress("Pre-loading Kodax...");
 
-    FOLDER = new File(Minecraft.getMinecraft().mcDataDir, "ProjectXENON");
+    FOLDER = new File(Minecraft.getMinecraft().mcDataDir, "Kodax");
     if (!FOLDER.exists()) {
       FOLDER.mkdirs();
     }
@@ -66,19 +63,8 @@ public class Kodax {
 
     logger.info("Fetching client manifest...");
 
-    try {
-      FULL_MANIFEST = ClientManifest.fetch(new URL(
-          "https://raw.githubusercontent.com/KodaxClient/Kodax-Repo/master/client_manifest.json"));
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-
-      JOptionPane
-          .showMessageDialog(null, "Manifest URL incorrect, Minecraft will now exit.", "FATAL",
-              JOptionPane.ERROR_MESSAGE);
-
-      System.exit(0);
-      return;
-    }
+    FULL_MANIFEST = ClientManifest.fetch(
+        "https://raw.githubusercontent.com/KodaxClient/Kodax-Repo/master/client_manifest.json");
 
     logger.info("Registering handlers...");
     handlerController.registerAll();
@@ -100,33 +86,40 @@ public class Kodax {
     if (Minecraft.getMinecraft().getSession() != null
         && Minecraft.getMinecraft().getSession().getProfile() != null
         && Minecraft.getMinecraft().getSession().getProfile().getId() != null) {
-      JsonObject apiObj = new JsonParser().parse(HttpUtil.performGet(
+      String json = HttpUtil.performGet(
           "http://api.kodingking.com/kodax/endpoints/user.php?UUID=" + Minecraft.getMinecraft()
-              .getSession().getProfile().getId().toString()))
-          .getAsJsonObject();
-      if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
-        handlerController.getCommandHandler().registerCommand(new Command() {
-          @Override
-          public String getName() {
-            return "kodax_admin";
-          }
+              .getSession().getProfile().getId().toString());
+      if (!json.isEmpty()) {
+        JsonObject apiObj = new JsonParser().parse(json)
+            .getAsJsonObject();
+        if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
+          logger.info(
+              "Detected admin user with UUID: " + Minecraft.getMinecraft().getSession().getProfile()
+                  .getId().toString());
 
-          @Override
-          public String getUsage() {
-            return "kodax_admin";
-          }
-
-          @Override
-          public void onCommand(String[] args) {
-            if (args.length == 0) {
-              return;
+          handlerController.getCommandHandler().registerCommand(new Command() {
+            @Override
+            public String getName() {
+              return "kodax_admin";
             }
 
-            String message = String.join(" ", args);
-            KodaxClient.sendPacket(new AdminAnnouncePacket(
-                Minecraft.getMinecraft().getSession().getProfile().getId(), message));
-          }
-        });
+            @Override
+            public String getUsage() {
+              return "kodax_admin";
+            }
+
+            @Override
+            public void onCommand(String[] args) {
+              if (args.length == 0) {
+                return;
+              }
+
+              String message = String.join(" ", args);
+              KodaxClient.sendPacket(new AdminAnnouncePacket(
+                  Minecraft.getMinecraft().getSession().getProfile().getId(), message));
+            }
+          });
+        }
       }
     }
 

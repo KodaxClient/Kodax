@@ -36,6 +36,10 @@ public class MixinServerList {
 
   @Inject(method = "loadServerList", at = @At(value = "INVOKE", target = "Ljava/util/List;clear()V", shift = Shift.AFTER))
   private void loadServerList(CallbackInfo callbackInfo) {
+    if (Kodax.FULL_MANIFEST == null || Kodax.FULL_MANIFEST.getPinnedServers() == null) {
+      return;
+    }
+
     for (PinnedServer pinnedServer : Kodax.FULL_MANIFEST.getPinnedServers()) {
       this.servers.add(new ServerData(pinnedServer.getName(), pinnedServer.getIp(), true));
     }
@@ -50,7 +54,8 @@ public class MixinServerList {
       NBTTagList nbttaglist = new NBTTagList();
 
       for (ServerData serverdata : this.servers) {
-        if (Kodax.FULL_MANIFEST.getPinnedServers().stream().noneMatch(
+        if (Kodax.FULL_MANIFEST != null && Kodax.FULL_MANIFEST.getPinnedServers() != null
+            && Kodax.FULL_MANIFEST.getPinnedServers().stream().noneMatch(
             pinnedServer -> pinnedServer.getName().equals(serverdata.serverName) && pinnedServer
                 .getIp().equals(serverdata.serverIP))) {
           nbttaglist.appendTag(serverdata.getNBTCompound());

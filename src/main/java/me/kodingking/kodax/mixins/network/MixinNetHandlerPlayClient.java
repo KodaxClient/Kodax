@@ -5,11 +5,9 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import me.kodingking.kodax.Kodax;
 import me.kodingking.kodax.command.Command;
-import me.kodingking.kodax.utils.PacketUtils;
-import me.kodingking.kodax.utils.PacketUtils.Payload;
+import me.kodingking.kodax.utils.ReflectionUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiMerchant;
@@ -55,30 +53,33 @@ public class MixinNetHandlerPlayClient {
 
     try {
       if (Minecraft.getMinecraft().currentScreen instanceof GuiChat) {
-        Field inputField = ((GuiChat) Minecraft.getMinecraft().currentScreen).getClass()
-            .getDeclaredField("inputField");
-        inputField.setAccessible(true);
-        GuiTextField input = (GuiTextField) inputField
-            .get((GuiChat) Minecraft.getMinecraft().currentScreen);
+        Field inputField = ReflectionUtils
+            .getField(Minecraft.getMinecraft().currentScreen.getClass(), new String[]{"a", "inputField"});
 
-        if (input.getText().startsWith("/")) {
+        if (inputField != null) {
+          inputField.setAccessible(true);
+          GuiTextField input = (GuiTextField) inputField
+              .get((GuiChat) Minecraft.getMinecraft().currentScreen);
 
-          String[] astring1 = input.getText().substring(1).split(" ", -1);
-          String s = astring1[0];
+          if (input.getText().startsWith("/")) {
 
-          if (astring1.length == 1) {
-            for (Command c : Kodax.INSTANCE.getHandlerController().getCommandHandler()
-                .getCommands()) {
-              if (CommandBase.doesStringStartWith(s, c.getName())) {
-                newOptions.add("/" + c.getName());
+            String[] astring1 = input.getText().substring(1).split(" ", -1);
+            String s = astring1[0];
+
+            if (astring1.length == 1) {
+              for (Command c : Kodax.INSTANCE.getHandlerController().getCommandHandler()
+                  .getCommands()) {
+                if (CommandBase.doesStringStartWith(s, c.getName())) {
+                  newOptions.add("/" + c.getName());
+                }
               }
-            }
 
-            astring = newOptions.toArray(new String[0]);
+              astring = newOptions.toArray(new String[0]);
+            }
           }
         }
       }
-    } catch (NoSuchFieldException | IllegalAccessException e) {
+    } catch (IllegalAccessException e) {
       e.printStackTrace();
     }
 
@@ -93,8 +94,9 @@ public class MixinNetHandlerPlayClient {
    */
   @Overwrite
   public void handleCustomPayload(S3FPacketCustomPayload packetIn) {
-    if (Minecraft.getMinecraft().thePlayer == null)
+    if (Minecraft.getMinecraft().thePlayer == null) {
       return;
+    }
 
     PacketThreadUtil.checkThreadAndEnqueue(packetIn, Minecraft.getMinecraft().thePlayer.sendQueue,
         this.gameController);
