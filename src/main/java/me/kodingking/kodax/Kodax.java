@@ -8,7 +8,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import javax.swing.JOptionPane;
-import jdk.nashorn.api.scripting.URLReader;
 import me.kodingking.kodax.command.Command;
 import me.kodingking.kodax.config.ConfigManager;
 import me.kodingking.kodax.config.SaveVal;
@@ -20,6 +19,7 @@ import me.kodingking.kodax.utils.Multithreading;
 import me.kodingking.kodax.utils.Scheduler;
 import me.kodingking.kodaxnetty.client.KodaxClient;
 import me.kodingking.kodaxnetty.packet.AdminAnnouncePacket;
+import me.kodingking.kodaxnetty.utils.HttpUtil;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,41 +97,37 @@ public class Kodax {
       }
     });
 
-    try {
-      if (Minecraft.getMinecraft().getSession() != null
-          && Minecraft.getMinecraft().getSession().getProfile() != null
-          && Minecraft.getMinecraft().getSession().getProfile().getId() != null) {
-        JsonObject apiObj = new JsonParser().parse(new URLReader(new URL(
-            "http://api.kodingking.com/kodax/endpoints/user.php?UUID=" + Minecraft.getMinecraft()
-                .getSession().getProfile().getId().toString())))
-            .getAsJsonObject();
-        if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
-          handlerController.getCommandHandler().registerCommand(new Command() {
-            @Override
-            public String getName() {
-              return "kodax_admin";
+    if (Minecraft.getMinecraft().getSession() != null
+        && Minecraft.getMinecraft().getSession().getProfile() != null
+        && Minecraft.getMinecraft().getSession().getProfile().getId() != null) {
+      JsonObject apiObj = new JsonParser().parse(HttpUtil.performGet(
+          "http://api.kodingking.com/kodax/endpoints/user.php?UUID=" + Minecraft.getMinecraft()
+              .getSession().getProfile().getId().toString()))
+          .getAsJsonObject();
+      if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
+        handlerController.getCommandHandler().registerCommand(new Command() {
+          @Override
+          public String getName() {
+            return "kodax_admin";
+          }
+
+          @Override
+          public String getUsage() {
+            return "kodax_admin";
+          }
+
+          @Override
+          public void onCommand(String[] args) {
+            if (args.length == 0) {
+              return;
             }
 
-            @Override
-            public String getUsage() {
-              return "kodax_admin";
-            }
-
-            @Override
-            public void onCommand(String[] args) {
-              if (args.length == 0) {
-                return;
-              }
-
-              String message = String.join(" ", args);
-              KodaxClient.sendPacket(new AdminAnnouncePacket(
-                  Minecraft.getMinecraft().getSession().getProfile().getId(), message));
-            }
-          });
-        }
+            String message = String.join(" ", args);
+            KodaxClient.sendPacket(new AdminAnnouncePacket(
+                Minecraft.getMinecraft().getSession().getProfile().getId(), message));
+          }
+        });
       }
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
     }
 
     logger.info("Done.");

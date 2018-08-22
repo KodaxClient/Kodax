@@ -6,15 +6,12 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import jdk.nashorn.api.scripting.URLReader;
 import me.kodingking.kodax.api.capes.CapeImageBuffer;
-import me.kodingking.kodax.api.zyntax.ZyntaxAPI;
 import me.kodingking.kodax.utils.Multithreading;
+import me.kodingking.kodaxnetty.utils.HttpUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ThreadDownloadImageData;
 import net.minecraft.util.ResourceLocation;
@@ -46,9 +43,9 @@ public class KodaxApi {
 
   public static boolean hasCape(UUID uuid) {
     try {
-      JsonObject apiObj = new JsonParser().parse(new URLReader(new URL(
+      JsonObject apiObj = new JsonParser().parse(HttpUtil.performGet(
           "http://api.kodingking.com/kodax/endpoints/capes.php?UUID=" + uuid
-              .toString())))
+              .toString()))
           .getAsJsonObject();
       return apiObj.has("status") && !apiObj.get("status").getAsString().equalsIgnoreCase("Error");
     } catch (Exception e) {
@@ -59,9 +56,9 @@ public class KodaxApi {
 
   public static String getCapeUrl(UUID uuid) {
     try {
-      JsonObject apiObj = new JsonParser().parse(new URLReader(new URL(
+      JsonObject apiObj = new JsonParser().parse(HttpUtil.performGet(
           "http://api.kodingking.com/kodax/endpoints/capes.php?UUID=" + uuid
-              .toString())))
+              .toString()))
           .getAsJsonObject();
       return apiObj.get("capeUrl").getAsString();
     } catch (Exception e) {

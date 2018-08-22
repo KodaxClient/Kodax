@@ -16,10 +16,10 @@ public class LaunchInjector implements ITweaker {
 
     private List<String> newArgs;
 
-    private boolean usingOptiFine;
+//    private boolean usingOptiFine;
 
     public LaunchInjector() {
-      usingOptiFine = Launch.classLoader.getTransformers().stream().anyMatch(iClassTransformer -> iClassTransformer.getClass().getName().equalsIgnoreCase("optifine.OptiFineTweaker"));
+//      usingOptiFine = Launch.classLoader.getTransformers().stream().anyMatch(iClassTransformer -> iClassTransformer.getClass().getName().equalsIgnoreCase("optifine.OptiFineTweaker"));
     }
 
     @Override
@@ -48,8 +48,8 @@ public class LaunchInjector implements ITweaker {
 
     @Override
     public String[] getLaunchArguments() {
-        if (usingOptiFine)
-            return new String[0];
+//        if (usingOptiFine)
+//            return new String[0];
         return newArgs.toArray(new String[0]);
     }
 

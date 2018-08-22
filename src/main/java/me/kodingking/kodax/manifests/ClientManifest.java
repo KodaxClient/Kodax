@@ -3,7 +3,7 @@ package me.kodingking.kodax.manifests;
 import com.google.gson.Gson;
 import java.net.URL;
 import java.util.List;
-import jdk.nashorn.api.scripting.URLReader;
+import me.kodingking.kodaxnetty.utils.HttpUtil;
 
 public class ClientManifest {
 
@@ -14,6 +14,7 @@ public class ClientManifest {
   }
 
   public static class PinnedServer {
+
     private String name, ip;
 
     public String getName() {
@@ -26,7 +27,7 @@ public class ClientManifest {
   }
 
   public static ClientManifest fetch(URL url) {
-    return new Gson().fromJson(new URLReader(url), ClientManifest.class);
+    return new Gson().fromJson(HttpUtil.performGet(url.getPath()), ClientManifest.class);
   }
 
 }
