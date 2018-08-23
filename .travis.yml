@@ -5,6 +5,11 @@ install:
 script:
  - 'bash gradlew build'
  - 'cp ./build/libs/Kodax*.jar ./Kodax.jar'
+before_deploy:
+ # Set up git user name and tag this commit
+ - git config --local user.name "KodaxDeploy"
+ - git config --local user.email "kodax@kodingking.com"
+ - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
 deploy:
   provider: releases
   api_key:
