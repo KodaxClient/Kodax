@@ -1,0 +1,14 @@
+language: java
+install:
+ - 'bash gradlew setupCiWorkspace'
+script:
+ - 'bash gradlew build'
+ - 'cp ./build/libs/Kodax*.jar ./Kodax.jar'
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_API_KEY
+  file: "./Kodax.jar"
+  skip_cleanup: true
+  on:
+    tags: true
