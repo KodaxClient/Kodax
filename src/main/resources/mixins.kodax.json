@@ -7,6 +7,8 @@
   "mixins": [
     "MixinMinecraft",
 
+    "block.MixinBlock",
+
     "client.multiplayer.MixinServerList",
 
     "entity.MixinEntityPlayerSP",
@@ -29,6 +31,8 @@
     "network.MixinNetworkManager",
     "network.MixinNetHandlerPlayClient",
 
-    "render.MixinEntityRenderer"
+    "render.MixinEntityRenderer",
+    "render.MixinGlStateManager",
+    "render.MixinRenderGlobal"
   ]
 }
