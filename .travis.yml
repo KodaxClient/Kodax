@@ -15,11 +15,12 @@ before_deploy:
   - git config --global user.name "Kodax Deploy"
   - export GIT_TAG=Beta-B$TRAVIS_BUILD_NUMBER
   - git tag $GIT_TAG -a -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
+  - 'cp ./build/libs/Kodax*.jar Kodax.jar'
 deploy:
   provider: releases
   api_key:
     secure: $GITHUB_API_KEY
-  file: "build/libs/**/*"
+  file: "Kodax.jar"
   skip_cleanup: true
   on:
     tags: false
