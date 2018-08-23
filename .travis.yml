@@ -8,7 +8,7 @@ script:
 before_deploy:
   - git config --global user.email "kodax@kodingking.com"
   - git config --global user.name "Kodax Deploy"
-  - export GIT_TAG=Build-$TRAVIS_BUILD_NUMBER-BETA
+  - export GIT_TAG=Beta-B$TRAVIS_BUILD_NUMBER
   - git tag $GIT_TAG -a -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
 deploy:
   provider: releases
