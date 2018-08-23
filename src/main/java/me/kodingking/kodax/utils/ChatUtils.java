@@ -43,6 +43,6 @@ public class ChatUtils {
   public static void sendChatMessage(String s) {
     if (Minecraft.getMinecraft().thePlayer == null)
       return;
-    addChatMessage(s, false);
+    Minecraft.getMinecraft().thePlayer.sendChatMessage(s);
   }
 }
