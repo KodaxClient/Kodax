@@ -1,5 +1,6 @@
 language: java
 install:
+ - 'gradle wrapper --gradle-version 2.7'
  - 'bash gradlew setupCiWorkspace'
 script:
  - 'bash gradlew build'
