@@ -1,10 +1,15 @@
 language: java
 install:
  - 'gradle wrapper --gradle-version 2.7'
- - 'bash gradlew setupCiWorkspace'
 script:
- - 'bash gradlew build'
- - 'cp ./build/libs/Kodax*.jar ./Kodax.jar'
+ - 'bash gradlew setupCiWorkspace build'
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
 before_deploy:
   - git config --global user.email "kodax@kodingking.com"
   - git config --global user.name "Kodax Deploy"
@@ -14,7 +19,17 @@ deploy:
   provider: releases
   api_key:
     secure: $GITHUB_API_KEY
-  file: "./Kodax.jar"
+  file: "./build/libs/"
   skip_cleanup: true
   on:
+    tags: false
     all_branches: true
+after_success:
+  - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+  - chmod +x send.sh
+  - ./send.sh success $WEBHOOK_URL
+after_failure:
+  - wget https://raw.githubusercontent.com/k3rn31p4nic/travis-ci-discord-webhook/master/send.sh
+  - chmod +x send.sh
+  - ./send.sh failure $WEBHOOK_URL
+if: tag IS blank
