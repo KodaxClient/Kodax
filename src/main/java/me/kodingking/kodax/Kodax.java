@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.File;
 import java.util.List;
+import me.kodingking.kodax.api.KodaxApi;
 import me.kodingking.kodax.command.Command;
 import me.kodingking.kodax.config.ConfigManager;
 import me.kodingking.kodax.config.SaveVal;
@@ -122,6 +123,9 @@ public class Kodax {
         }
       }
     }
+
+    logger.info("Starting API thread...");
+    KodaxApi.init();
 
     logger.info("Done.");
   }
