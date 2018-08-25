@@ -2,7 +2,8 @@ package me.kodingking.kodax.mixins.network;
 
 import io.netty.channel.ChannelHandlerContext;
 import me.kodingking.kodax.Kodax;
-import me.kodingking.kodax.events.network.PacketReceivedEvent;
+import me.kodingking.kodax.event.EventBus;
+import me.kodingking.kodax.event.events.network.PacketReceivedEvent;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +18,7 @@ public class MixinNetworkManager {
   private void channelRead0(ChannelHandlerContext channelHandlerContext, Packet packet,
       CallbackInfo callbackInfo) {
     PacketReceivedEvent packetReceivedEvent = new PacketReceivedEvent(packet);
-    Kodax.EVENT_BUS.call(packetReceivedEvent);
+    EventBus.call(packetReceivedEvent);
   }
 
 }

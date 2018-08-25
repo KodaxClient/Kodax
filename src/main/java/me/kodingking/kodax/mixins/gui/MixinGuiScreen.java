@@ -1,8 +1,9 @@
 package me.kodingking.kodax.mixins.gui;
 
 import me.kodingking.kodax.Kodax;
-import me.kodingking.kodax.events.MouseClickEvent;
-import me.kodingking.kodax.events.gui.GuiScreenDrawEvent;
+import me.kodingking.kodax.event.EventBus;
+import me.kodingking.kodax.event.events.MouseClickEvent;
+import me.kodingking.kodax.event.events.gui.GuiScreenDrawEvent;
 import me.kodingking.kodax.utils.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -31,7 +32,7 @@ public abstract class MixinGuiScreen {
       CallbackInfo callbackInfo) {
     GuiScreenDrawEvent guiScreenDrawEvent = new GuiScreenDrawEvent(GuiScreenDrawEvent.Type.PRE,
         mouseX, mouseY, partialTicks);
-    Kodax.EVENT_BUS.call(guiScreenDrawEvent);
+    EventBus.call(guiScreenDrawEvent);
   }
 
   @Inject(method = "drawScreen", at = @At("RETURN"))
@@ -39,14 +40,14 @@ public abstract class MixinGuiScreen {
       CallbackInfo callbackInfo) {
     GuiScreenDrawEvent guiScreenDrawEvent = new GuiScreenDrawEvent(GuiScreenDrawEvent.Type.POST,
         mouseX, mouseY, partialTicks);
-    Kodax.EVENT_BUS.call(guiScreenDrawEvent);
+    EventBus.call(guiScreenDrawEvent);
   }
 
   @Inject(method = "mouseClicked", at = @At("HEAD"))
   private void preMouseClicked(int mouseX, int mouseY, int mouseButton, CallbackInfo callbackInfo) {
     MouseClickEvent mouseClickEvent = new MouseClickEvent(mouseButton, mouseX, mouseY,
         MouseClickEvent.Type.PRE);
-    Kodax.EVENT_BUS.call(mouseClickEvent);
+    EventBus.call(mouseClickEvent);
   }
 
   @Inject(method = "mouseClicked", at = @At("RETURN"))
@@ -54,7 +55,7 @@ public abstract class MixinGuiScreen {
       CallbackInfo callbackInfo) {
     MouseClickEvent mouseClickEvent = new MouseClickEvent(mouseButton, mouseX, mouseY,
         MouseClickEvent.Type.POST);
-    Kodax.EVENT_BUS.call(mouseClickEvent);
+    EventBus.call(mouseClickEvent);
   }
 
   /**

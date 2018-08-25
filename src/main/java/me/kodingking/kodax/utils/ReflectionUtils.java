@@ -13,7 +13,8 @@ public class ReflectionUtils {
                     m.setAccessible(true);
                     return m;
                 }
-            } catch (NoSuchMethodException ignored) { }
+            } catch (NoSuchMethodException ignored) {
+            }
         }
         return null;
     }
@@ -26,9 +27,29 @@ public class ReflectionUtils {
                     f.setAccessible(true);
                     return f;
                 }
-            } catch (NoSuchFieldException ignored) { }
+            } catch (NoSuchFieldException ignored) {
+            }
         }
         return null;
+    }
+
+    public static boolean isSubclassOf(Class<?> clazz, Class<?> superClass) {
+        if (superClass.equals(Object.class)) {
+            // Every class is an Object.
+            return true;
+        }
+        if (clazz.equals(superClass)) {
+            return true;
+        } else {
+            clazz = clazz.getSuperclass();
+            // every class is Object, but superClass is below Object
+            if (clazz == null || clazz.equals(Object.class)) {
+                // we've reached the top of the hierarchy, but superClass couldn't be found.
+                return false;
+            }
+            // try the next level up the hierarchy.
+            return isSubclassOf(clazz, superClass);
+        }
     }
 
 }
