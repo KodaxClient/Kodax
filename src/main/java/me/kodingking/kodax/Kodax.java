@@ -2,6 +2,9 @@ package me.kodingking.kodax;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
 import me.kodingking.kodax.api.KodaxApi;
 import me.kodingking.kodax.command.Command;
 import me.kodingking.kodax.config.ConfigManager;
@@ -9,179 +12,194 @@ import me.kodingking.kodax.config.SaveVal;
 import me.kodingking.kodax.controllers.HandlerController;
 import me.kodingking.kodax.event.EventBus;
 import me.kodingking.kodax.event.events.ShutdownEvent;
-import me.kodingking.kodax.listeners.netty.NettyListener;
 import me.kodingking.kodax.manifests.ClientManifest;
+import me.kodingking.kodax.netty.NettyEventListener;
+import me.kodingking.kodax.netty.NettyListener;
+import me.kodingking.kodax.utils.HttpUtils;
 import me.kodingking.kodax.utils.Multithreading;
 import me.kodingking.kodax.utils.Scheduler;
-import me.kodingking.kodaxnetty.client.KodaxClient;
-import me.kodingking.kodaxnetty.packet.AdminAnnouncePacket;
-import me.kodingking.kodaxnetty.utils.HttpUtil;
+import me.kodingking.netty.client.MinecraftSettings;
+import me.kodingking.netty.client.NettyClient;
+import me.kodingking.netty.packet.impl.projects.kodax.CPacketAnnounce;
 import net.minecraft.client.Minecraft;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.Display;
 
-import java.io.File;
-import java.util.List;
-
 public class Kodax {
 
-    public static Kodax INSTANCE = new Kodax();
-    public static Scheduler SCHEDULER = new Scheduler();
-    public static ConfigManager CONFIG;
-    public static File FOLDER;
-    public static ClientManifest FULL_MANIFEST;
+  public static Kodax INSTANCE = new Kodax();
+  public static Scheduler SCHEDULER = new Scheduler();
+  public static ConfigManager CONFIG;
+  public static File FOLDER;
+  public static ClientManifest FULL_MANIFEST;
 
-    private Logger logger = LogManager.getLogger(getClientName());
-    private HandlerController handlerController = new HandlerController();
-    private GlobalSettings settings = new GlobalSettings();
+  private Logger logger = LogManager.getLogger(getClientName());
+  private HandlerController handlerController = new HandlerController();
+  private GlobalSettings settings = new GlobalSettings();
 
-    @SaveVal
-    public boolean FIRST_LAUNCH = true;
+  @SaveVal
+  public boolean FIRST_LAUNCH = true;
 
-    public void preStart() {
-        logger.info("Starting Kodax pre-initialisation...");
+  public void preStart() {
+    logger.info("Starting Kodax pre-initialisation...");
 
-        SplashScreen.advanceProgress("Pre-loading Kodax...");
+    SplashScreen.advanceProgress("Pre-loading Kodax...");
 
-        FOLDER = new File(Minecraft.getMinecraft().mcDataDir, "Kodax");
-        if (!FOLDER.exists()) {
-            FOLDER.mkdirs();
-        }
-        CONFIG = new ConfigManager(new File(FOLDER, "config.json"));
+    FOLDER = new File(Minecraft.getMinecraft().mcDataDir, "Kodax");
+    if (!FOLDER.exists()) {
+      FOLDER.mkdirs();
+    }
+    CONFIG = new ConfigManager(new File(FOLDER, "config.json"));
 
-        CONFIG.register(this);
-        CONFIG.register(settings);
+    CONFIG.register(this);
+    CONFIG.register(settings);
 
-        logger.info("Registering events...");
-        EventBus.register(INSTANCE);
-        EventBus.register(SCHEDULER);
-        EventBus.register(new MainListener());
+    logger.info("Registering events...");
+    EventBus.register(INSTANCE);
+    EventBus.register(SCHEDULER);
+    EventBus.register(new MainListener());
 //        EVENT_BUS.register(new OverlayRenderer());
 
-        logger.info("Adding shutdown hook...");
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    logger.info("Adding shutdown hook...");
+    Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
 
-        logger.info("Fetching client manifest...");
+    logger.info("Fetching client manifest...");
 
-        FULL_MANIFEST = ClientManifest.fetch(
-                "https://raw.githubusercontent.com/KodaxClient/Kodax-Repo/master/client_manifest.json");
+    FULL_MANIFEST = ClientManifest.fetch(
+        "https://raw.githubusercontent.com/KodaxClient/Kodax-Repo/master/client_manifest.json");
 
-        logger.info("Registering handlers...");
-        handlerController.registerAll();
+    logger.info("Registering handlers...");
+    handlerController.registerAll();
 
-        if (FIRST_LAUNCH) {
-            FIRST_LAUNCH = false;
-        }
+    if (FIRST_LAUNCH) {
+      FIRST_LAUNCH = false;
+    }
 
-        logger.info("Connecting to netty...");
-        Multithreading.run(() -> {
-            try {
-                KodaxClient
-                        .init("104.128.228.219", 9575, () -> KodaxClient.registerListener(new NettyListener()));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    logger.info("Connecting to netty...");
+    Multithreading.run(() -> {
+      String accessToken = Minecraft.getMinecraft().getSession().getToken();
+      String username = Minecraft.getMinecraft().getSession().getUsername();
+      UUID uuid = Minecraft.getMinecraft().getSession().getProfile().getId();
 
-        if (Minecraft.getMinecraft().getSession() != null
-                && Minecraft.getMinecraft().getSession().getProfile() != null
-                && Minecraft.getMinecraft().getSession().getProfile().getId() != null) {
-            String json = HttpUtil.performGet(
-                    "http://api.kodingking.com/kodax/endpoints/user.php?UUID=" + Minecraft.getMinecraft()
-                            .getSession().getProfile().getId().toString());
-            if (!json.isEmpty()) {
-                JsonObject apiObj = new JsonParser().parse(json)
-                        .getAsJsonObject();
-                if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
-                    logger.info(
-                            "Detected admin user with UUID: " + Minecraft.getMinecraft().getSession().getProfile()
-                                    .getId().toString());
+      try {
+        NettyClient.init(me.kodingking.netty.Constants.SERVER_IP,
+            me.kodingking.netty.Constants.SERVER_PORT,
+            new MinecraftSettings(accessToken, username, uuid), true, () -> {
+              EventBus.register(new NettyEventListener());
+              NettyClient.registerPacketHandler(new NettyListener());
+            });
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    });
 
-                    handlerController.getCommandHandler().registerCommand(new Command() {
-                        @Override
-                        public String getName() {
-                            return "kodax_admin";
-                        }
+    if (Minecraft.getMinecraft().getSession() != null
+        && Minecraft.getMinecraft().getSession().getProfile() != null
+        && Minecraft.getMinecraft().getSession().getProfile().getId() != null) {
+      try {
+        String json = HttpUtils.get(
+            "http://api.kodingking.com/kodax/endpoints/user.php?UUID=" + Minecraft
+                .getMinecraft()
+                .getSession().getProfile().getId().toString());
+        if (!json.isEmpty()) {
+          JsonObject apiObj = new JsonParser().parse(json)
+              .getAsJsonObject();
+          if (apiObj.has("admin") && apiObj.get("admin").getAsInt() == 1) {
+            logger.info(
+                "Detected admin user with UUID: " + Minecraft.getMinecraft().getSession()
+                    .getProfile()
+                    .getId().toString());
 
-                        @Override
-                        public String getUsage() {
-                            return "kodax_admin";
-                        }
+            handlerController.getCommandHandler().registerCommand(new Command() {
+              @Override
+              public String getName() {
+                return "kodax_admin";
+              }
 
-                        @Override
-                        public void onCommand(String[] args) {
-                            if (args.length == 0) {
-                                return;
-                            }
+              @Override
+              public String getUsage() {
+                return "kodax_admin";
+              }
 
-                            String message = String.join(" ", args);
-                            KodaxClient.sendPacket(new AdminAnnouncePacket(
-                                    Minecraft.getMinecraft().getSession().getProfile().getId(), message));
-                        }
-                    });
+              @Override
+              public void onCommand(String[] args) {
+                if (args.length == 0) {
+                  return;
                 }
-            }
+
+                String message = String.join(" ", args);
+                NettyClient.sendPacket(new CPacketAnnounce(message));
+              }
+            });
+          }
         }
-
-        logger.info("Starting API thread...");
-        KodaxApi.init();
-
-        logger.info("Done.");
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
-    public void postStart() {
-        logger.info("Starting " + getClientName() + " post-initialisation...");
+    logger.info("Starting API thread...");
+    KodaxApi.init();
 
-        SplashScreen.advanceProgress("Post-loading " + getClientName() + "...");
+    logger.info("Done.");
+  }
 
-        logger.info("Loading config...");
-        CONFIG.load();
+  public void postStart() {
+    logger.info("Starting " + getClientName() + " post-initialisation...");
 
-        handlerController.getKeybindHandler().loadPrevBinds();
+    SplashScreen.advanceProgress("Post-loading " + getClientName() + "...");
 
-        logger.info("Done.");
+    logger.info("Loading config...");
+    CONFIG.load();
 
-        Display.setTitle(getDisplayTitle());
-    }
+    handlerController.getKeybindHandler().loadPrevBinds();
 
-    public void shutdown() {
-        logger.info("Shutting down " + getClientName() + "...");
+    logger.info("Done.");
 
-        logger.info("Posting shutdown event...");
-        EventBus.call(new ShutdownEvent());
+    Display.setTitle(getDisplayTitle());
+  }
 
-        logger.info("Saving config...");
-        CONFIG.save();
+  public void shutdown() {
+    logger.info("Shutting down " + getClientName() + "...");
 
-        logger.info("Done.");
-    }
+    logger.info("Posting shutdown event...");
+    EventBus.call(new ShutdownEvent());
 
-    public Logger getLogger() {
-        return logger;
-    }
+    logger.info("Saving config...");
+    CONFIG.save();
 
-    public String getClientName() {
-        return Constants.CLIENT_NAME;
-    }
+    logger.info("Shutting down netty...");
+    NettyClient.shutdown();
 
-    public String getClientVersion() {
-        return Constants.CLIENT_VERSION;
-    }
+    logger.info("Done.");
+  }
 
-    public List<String> getClientAuthors() {
-        return Constants.CLIENT_AUTHORS;
-    }
+  public Logger getLogger() {
+    return logger;
+  }
 
-    public String getDisplayTitle() {
-        return Constants.CLIENT_NAME + " // " + Constants.CLIENT_VERSION;
-    }
+  public String getClientName() {
+    return Constants.CLIENT_NAME;
+  }
 
-    public GlobalSettings getSettings() {
-        return settings;
-    }
+  public String getClientVersion() {
+    return Constants.CLIENT_VERSION;
+  }
 
-    public HandlerController getHandlerController() {
-        return handlerController;
-    }
+  public List<String> getClientAuthors() {
+    return Constants.CLIENT_AUTHORS;
+  }
+
+  public String getDisplayTitle() {
+    return Constants.CLIENT_NAME + " // " + Constants.CLIENT_VERSION;
+  }
+
+  public GlobalSettings getSettings() {
+    return settings;
+  }
+
+  public HandlerController getHandlerController() {
+    return handlerController;
+  }
 }

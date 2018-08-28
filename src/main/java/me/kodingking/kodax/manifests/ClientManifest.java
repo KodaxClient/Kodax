@@ -1,10 +1,9 @@
 package me.kodingking.kodax.manifests;
 
 import com.google.gson.Gson;
-import java.net.URL;
+import java.io.IOException;
 import java.util.List;
-import javax.swing.JOptionPane;
-import me.kodingking.kodaxnetty.utils.HttpUtil;
+import me.kodingking.kodax.utils.HttpUtils;
 
 public class ClientManifest {
 
@@ -28,13 +27,17 @@ public class ClientManifest {
   }
 
   public static ClientManifest fetch(String url) {
-    String json = HttpUtil.performGet(url);
+    try {
+      String json = HttpUtils.get(url);
+      if (json.isEmpty()) {
+        return new ClientManifest();
+      }
 
-    if (json.isEmpty()) {
-      return new ClientManifest();
+      return new Gson().fromJson(json, ClientManifest.class);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-
-    return new Gson().fromJson(json, ClientManifest.class);
+    return new ClientManifest();
   }
 
 }

@@ -13,7 +13,6 @@ import java.util.Queue;
 import java.util.UUID;
 import me.kodingking.kodax.api.capes.CapeImageBuffer;
 import me.kodingking.kodax.utils.Multithreading;
-import me.kodingking.kodaxnetty.utils.HttpUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ThreadDownloadImageData;
 import net.minecraft.util.ResourceLocation;
@@ -37,16 +36,19 @@ public class KodaxApi {
 
   public static void init() {
     Multithreading.run(() -> {
-      for (;;) {
-        if (capeThreadCount < 0)
+      for (; ; ) {
+        if (capeThreadCount < 0) {
           capeThreadCount = 0;
+        }
 
         GameProfile profile = capeQueue.poll();
-        if (profile == null || capeThreadCount + 1 > 3)
+        if (profile == null || capeThreadCount + 1 > 3) {
           continue;
+        }
 
         KodaxApi.capeThreadCount++;
-        System.out.println("Downloading cape for " + profile.getName() + " in thread #" + capeThreadCount);
+        System.out.println(
+            "Downloading cape for " + profile.getName() + " in thread #" + capeThreadCount);
         Multithreading.run(new CapeRunnable(profile));
       }
     });
@@ -120,6 +122,7 @@ public class KodaxApi {
   }
 
   public static class CapeRunnable implements Runnable {
+
     private GameProfile gameProfile;
 
     public CapeRunnable(GameProfile gameProfile) {
@@ -132,7 +135,8 @@ public class KodaxApi {
         if (hasCape(gameProfile.getId())) {
           downloadCape(gameProfile, getCapeUrl(gameProfile.getId()));
         } else {
-          downloadCape(gameProfile, "http://s.optifine.net/capes/" + gameProfile.getName() + ".png");
+          downloadCape(gameProfile,
+              "http://s.optifine.net/capes/" + gameProfile.getName() + ".png");
         }
       }
       KodaxApi.capeThreadCount = Math.max(0, KodaxApi.capeThreadCount - 1);
