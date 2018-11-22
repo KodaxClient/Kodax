@@ -7,3 +7,4 @@ out/
 run/
 src/api/
 src/test/
+.DS_Store
